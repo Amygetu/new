@@ -4,6 +4,7 @@
  */
 
 #include "zipindex.h"
+#include <sstream>
 
 /**
  * @brief Builds the index from a length-indicated file.
@@ -21,9 +22,12 @@ void ZipIndex::buildIndex(const string& filename) {
     string line;
 
     while (getline(file, line)) {
-        size_t commaPos = line.find(',');
-        if (commaPos != string::npos) {
-            string zipCode = line.substr(commaPos + 1, 5); // Assuming Zip Code is 5 characters
+        // Finds second field (zip code) after first coma
+        size_t firstCommaPos = line.find(',');
+        if (firstCommaPos != string::npos) {
+            // Getting the Zip code (5 char. after the coma) 
+            string zipCode = line.substr(firstCommaPos + 1, 5); // Assuming Zip Code is 5 characters
+            // store the zip code and its offset
             index[zipCode] = offset;
         }
         offset = file.tellg();
@@ -59,11 +63,22 @@ void ZipIndex::loadIndex(const string& indexFilename) {
         return;
     }
 
+    
     index.clear();
-    string zipCode;
-    long offset;
-    while (file >> zipCode >> offset) {
-        index[zipCode] = offset;
+    string line;
+    while (getline(file, line)) {
+        size_t commaPos = line.find(',');
+        if (commaPos != string::npos) {
+            string zipCode = line.substr(0, commaPos);
+            long offset;
+            try {
+                offset = stol(line.substr(commaPos + 1));
+                index[zipCode] = offset;
+            }
+            catch (const std::exception& e) {
+                cerr << "Error parsing the offset for this zip code" << zipCode << e.what() << endl;
+            }
+        }
     }
     file.close();
 }
@@ -79,4 +94,12 @@ long ZipIndex::findZipCode(const string& zipCode) const {
         return it->second;
     }
     return -1;
+}
+
+/**
+ * @brief Returns the size of the index.
+ * @return The number of entries in the index.
+ */
+size_t ZipIndex::size() const {
+    return index.size();
 }
