@@ -3,7 +3,7 @@
  * @brief Implements the ZipIndex class for managing the primary key index.
  */
 
-#include "zipIndex.h"
+#include "zipindex.h"
 
 /**
  * @brief Builds the index from a length-indicated file.
